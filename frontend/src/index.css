@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-white font-sans text-brand-text antialiased transition-colors duration-300 dark:bg-brand-dark dark:text-slate-50;
+  margin: 0;
+  min-width: 320px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.app-shell {
+  @apply min-h-screen bg-[radial-gradient(circle_at_top,_rgba(255,107,53,0.15),_transparent_28%),linear-gradient(180deg,_#ffffff_0%,_#f8fafc_100%)] dark:bg-[radial-gradient(circle_at_top,_rgba(0,217,165,0.16),_transparent_22%),linear-gradient(180deg,_#0f172a_0%,_#020617_100%)];
+}
+
+.container-shell {
+  @apply mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8;
+}
+
+.glass-panel {
+  @apply rounded-2xl border border-white/60 bg-white/80 shadow-soft backdrop-blur dark:border-slate-800 dark:bg-slate-900/75 sm:rounded-3xl;
+}
+
+.section-gap {
+  @apply py-8 sm:py-12 md:py-16;
+}
+
+/* Touch-friendly buttons */
+@media (max-width: 768px) {
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+  }
+}
+
+/* Prevent horizontal scroll */
+html {
+  overflow-x: hidden;
+}
+
+/* Swiper touch optimization */
+.swiper {
+  touch-action: pan-y;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Safe area for mobile */
+@supports (padding: max(0px)) {
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
