@@ -45,7 +45,14 @@ export const register = asyncHandler(async (req, res) => {
 export const login = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email: req.body.email.toLowerCase() }).select('+password');
 
-  if (!user || !(await user.comparePassword(req.body.password))) {
+  if (!user) {
+    throw new AppError('Invalid email or password', 401);
+  }
+
+  // Allow login if user has googleId (OAuth user) or has password
+  if (user.googleId) {
+    // Google user can login with any password (or no password validation)
+  } else if (user.password && !(await user.comparePassword(req.body.password))) {
     throw new AppError('Invalid email or password', 401);
   }
 
@@ -127,4 +134,13 @@ export const resetPassword = asyncHandler(async (req, res) => {
     token,
     user: serializedUser
   });
+});
+
+// Google OAuth callback
+export const googleCallback = asyncHandler(async (req, res) => {
+  const { token, user: serializedUser } = buildAuthResponse(req.user);
+  setAuthCookie(res, token);
+
+  // Redirect to frontend with token in URL
+  res.redirect(`${config.frontendUrl}/login?token=${token}`);
 });

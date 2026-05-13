@@ -2,13 +2,26 @@ import connectDB from '../config/db.js';
 import { Category, Product, RechargePlan, User } from '../models/index.js';
 import { slugify } from '../utils/helpers.js';
 
+// Load config for dotenv
+import '../config/index.js';
+
 const categories = [
+  // Product categories
   { name: 'Electronics', type: 'product', description: 'Latest gadgets and tech accessories' },
   { name: 'Fashion', type: 'product', description: 'Trendy clothing and accessories' },
   { name: 'Home & Living', type: 'product', description: 'Furniture and home essentials' },
   { name: 'Sports & Fitness', type: 'product', description: 'Sports equipment and fitness gear' },
   { name: 'Books & Media', type: 'product', description: 'Books and entertainment media' },
-  { name: 'Beauty & Health', type: 'product', description: 'Beauty products and health supplements' }
+  { name: 'Beauty & Health', type: 'product', description: 'Beauty products and health supplements' },
+  { name: 'Tyre Shop', type: 'product', description: 'Quality tyres for bicycles and bikes' },
+  // Recharge category
+  { name: 'Mobile Recharge', type: 'recharge', description: 'Quick mobile prepaid recharges' },
+  // Service categories
+  { name: 'Daily Utility Services', type: 'service', description: 'Everyday utility services for your needs' },
+  { name: 'Money Transfer & AEPS', type: 'service', description: 'Secure money transfer and AEPS services' },
+  { name: 'Bike Tyres & Repair', type: 'service', description: 'Professional bike tyre and repair services' },
+  { name: 'SIM & Recharge Services', type: 'service', description: 'SIM cards and recharge services' },
+  { name: 'Cycle Repair & Parts', type: 'service', description: 'Cycle repair and quality spare parts' }
 ];
 
 const products = [
@@ -83,7 +96,7 @@ const seed = async () => {
 
   const categoryMap = Object.fromEntries(createdCategories.map((item) => [item.name, item._id]));
 
-  const categoryNames = ['Electronics', 'Fashion', 'Home & Living', 'Sports & Fitness', 'Books & Media', 'Beauty & Health'];
+  const categoryNames = ['Electronics', 'Fashion', 'Home & Living', 'Sports & Fitness', 'Books & Media', 'Beauty & Health', 'Tyre Shop'];
 
   console.log('Preparing products...');
   const productsToInsert = products.map((product, index) => {
@@ -113,18 +126,18 @@ const seed = async () => {
 
   console.log('Creating users...');
   await User.create({
-    name: 'Admin User',
-    email: 'admin@omcyclestore.com',
-    password: 'Admin@123',
-    phone: '9876543210',
+    name: process.env.ADMIN_NAME || 'Admin User',
+    email: process.env.ADMIN_EMAIL || 'admin@omcyclestore.com',
+    password: process.env.ADMIN_PASSWORD || 'Admin@123',
+    phone: process.env.ADMIN_PHONE || '9876543210',
     role: 'admin'
   });
 
   await User.create({
-    name: 'Demo Customer',
-    email: 'customer@omcyclestore.com',
-    password: 'Customer@123',
-    phone: '9876543201',
+    name: process.env.CUSTOMER_NAME || 'Demo Customer',
+    email: process.env.CUSTOMER_EMAIL || 'customer@omcyclestore.com',
+    password: process.env.CUSTOMER_PASSWORD || 'Customer@123',
+    phone: process.env.CUSTOMER_PHONE || '9876543201',
     role: 'customer'
   });
 
@@ -132,7 +145,7 @@ const seed = async () => {
   console.log(`- ${categories.length} categories`);
   console.log(`- ${products.length} products`);
   console.log(`- ${rechargePlans.length} recharge plans`);
-  console.log(`- 2 users (admin and customer)`);
+  console.log(`- 2 users (admin: ${process.env.ADMIN_EMAIL}, customer: ${process.env.CUSTOMER_EMAIL})`);
   process.exit(0);
 };
 

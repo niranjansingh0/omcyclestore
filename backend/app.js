@@ -3,13 +3,18 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
+import passport from 'passport';
 
 import config from './config/index.js';
 import { apiLimiter, authLimiter } from './middleware/rateLimiter.js';
 import { errorHandler, notFound } from './middleware/error.js';
 import router from './routes/index.js';
+import './config/passport.js';
 
 const app = express();
+
+// Initialize Passport
+app.use(passport.initialize());
 
 app.use(helmet());
 app.use(

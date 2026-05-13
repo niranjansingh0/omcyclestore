@@ -70,7 +70,6 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, 'Password is required'],
       minlength: 6,
       select: false
     },
@@ -101,6 +100,11 @@ const userSchema = new mongoose.Schema(
     passwordResetExpires: {
       type: Date,
       select: false
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true
     }
   },
   {
@@ -109,7 +113,7 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.pre('save', async function savePassword() {
-  if (!this.isModified('password')) {
+  if (!this.isModified('password') || !this.password) {
     return;
   }
   this.password = await bcrypt.hash(this.password, config.security.bcryptSaltRounds);

@@ -1,16 +1,36 @@
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { FaGoogle, FaFacebookF } from 'react-icons/fa';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { login, clearError } from '../features/auth/authSlice';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { loading, error } = useSelector((state) => state.auth);
+
+  // Handle Google OAuth callback
+  useEffect(() => {
+    const token = searchParams.get('token');
+    if (token) {
+      localStorage.setItem('token', token);
+      window.location.href = '/';
+    }
+    const errorMsg = searchParams.get('error');
+    if (errorMsg) {
+      alert('Google login failed. Please try again.');
+    }
+  }, [searchParams]);
+
+  const handleGoogleLogin = () => {
+    window.location.href = `${API_URL}/auth/google`;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -92,11 +112,11 @@ export default function LoginPage() {
         </div>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <button type="button" className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-3 text-sm dark:border-slate-700">
+          <button type="button" onClick={handleGoogleLogin} className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-3 text-sm dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">
             <FaGoogle />
             Google
           </button>
-          <button type="button" className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-3 text-sm dark:border-slate-700">
+          <button type="button" className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-3 text-sm dark:border-slate-700 cursor-not-allowed opacity-50" title="Coming soon">
             <FaFacebookF />
             Facebook
           </button>

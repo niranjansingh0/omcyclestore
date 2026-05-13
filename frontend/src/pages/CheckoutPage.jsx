@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { orderAPI } from '../services/api';
+import { orderAPI, paymentAPI } from '../services/api';
 import { clearCartAsync } from '../features/cart/cartSlice';
 import { isAuthenticated } from '../utils/auth';
 
@@ -17,16 +17,94 @@ export default function CheckoutPage() {
     phone: user?.phone || '',
     address: user?.addresses?.[0] || '',
     city: '',
-    paymentMethod: 'credit-card'
+    paymentMethod: 'razorpay'
   });
+
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   if (!items.length) {
     navigate('/cart');
     return null;
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleRazorpayPayment = async () => {
+    if (!isAuthenticated()) {
+      navigate('/login');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Create Razorpay order
+      const { data } = await paymentAPI.createOrder({ amount: totalPrice, currency: 'INR' });
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'your_razorpay_key_id',
+        amount: data.amount,
+        currency: data.currency,
+        name: 'OmcycleStore',
+        description: 'Order Payment',
+        order_id: data.orderId,
+        handler: async (response) => {
+          try {
+            await paymentAPI.verifyPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            });
+
+            // Create order after successful payment
+            const orderItems = items.map(item => ({
+              productId: item.productId || item.id,
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity
+            }));
+
+            await orderAPI.createOrder({
+              items: orderItems,
+              shippingAddress: `${formData.address}, ${formData.city}`,
+              total: totalPrice,
+              paymentId: response.razorpay_payment_id,
+              paymentStatus: 'paid'
+            });
+
+            dispatch(clearCartAsync());
+            navigate('/orders');
+          } catch (error) {
+            console.error('Payment verification failed:', error);
+            alert('Payment verification failed. Please contact support.');
+          }
+        },
+        prefill: {
+          name: formData.name,
+          email: formData.email,
+          contact: formData.phone
+        },
+        theme: {
+          color: '#2563eb'
+        }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (error) {
+      console.error('Payment initiation failed:', error);
+      alert('Failed to initiate payment. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCODOrder = async () => {
     if (!isAuthenticated()) {
       navigate('/login');
       return;
@@ -44,7 +122,9 @@ export default function CheckoutPage() {
       await orderAPI.createOrder({
         items: orderItems,
         shippingAddress: `${formData.address}, ${formData.city}`,
-        total: totalPrice
+        total: totalPrice,
+        paymentMethod: 'cod',
+        paymentStatus: 'pending'
       });
 
       dispatch(clearCartAsync());
@@ -53,6 +133,15 @@ export default function CheckoutPage() {
       console.error('Order failed:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (formData.paymentMethod === 'razorpay') {
+      handleRazorpayPayment();
+    } else {
+      handleCODOrder();
     }
   };
 
@@ -114,8 +203,7 @@ export default function CheckoutPage() {
           <h2 className="text-xl font-bold">Payment method</h2>
           <div className="mt-4 grid gap-3">
             {[
-              { id: 'credit-card', label: 'Credit / Debit Card' },
-              { id: 'upi', label: 'UPI / Wallet' },
+              { id: 'razorpay', label: 'Pay with Razorpay (Card, UPI, Wallet)' },
               { id: 'cod', label: 'Cash on Delivery' }
             ].map((method) => (
               <label key={method.id} className="flex items-center gap-3 rounded-2xl border border-slate-200 px-4 py-4 dark:border-slate-700">
